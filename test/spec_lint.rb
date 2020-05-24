@@ -604,34 +604,12 @@ describe Rack::Lint do
     assert_lint nil, ''.dup
     assert_lint 1, ''.dup
   end
-
-  it "notice hijack errors" do
-    lambda {
-      Rack::Lint.new(lambda { |env|
-                       env['rack.hijack'].call
-                       [201, { "Content-type" => "text/plain", "Content-length" => "0" }, []]
-                     }).call(env({ 'rack.hijack?' => true, 'rack.hijack' => lambda { Object.new } }))
-    }.must_raise(Rack::Lint::LintError).
-      message.must_match(/rack.hijack_io must respond to read/)
-
-      Rack::Lint.new(lambda { |env|
-                       env['rack.hijack'].call
-                       [201, { "Content-type" => "text/plain", "Content-length" => "0" }, []]
-                     }).call(env({ 'rack.hijack?' => true, 'rack.hijack' => lambda { StringIO.new }, 'rack.hijack_io' => StringIO.new })).
-        first.must_equal 201
-
-      Rack::Lint.new(lambda { |env|
-                       env['rack.hijack?'] = true
-                       [201, { "Content-type" => "text/plain", "Content-length" => "0", 'rack.hijack' => lambda {|io| io }, 'rack.hijack_io' => StringIO.new }, []]
-                     }).call(env({}))[1]['rack.hijack'].call(StringIO.new).read.must_equal ''
-  end
-
 end
 
-describe "Rack::Lint::InputWrapper" do
+describe "Rack::Lint::Wrapper::InputWrapper" do
   it "delegate :rewind to underlying IO object" do
     io = StringIO.new("123")
-    wrapper = Rack::Lint::InputWrapper.new(io)
+    wrapper = Rack::Lint::Wrapper::InputWrapper.new(io)
     wrapper.read.must_equal "123"
     wrapper.read.must_equal ""
     wrapper.rewind
