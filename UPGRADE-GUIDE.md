@@ -157,3 +157,9 @@ end
 Be aware that the response body might not respond to `#each` and you must now check if the body responds to `#each` or not to determine if it is an enumerable or streaming body.
 
 You must not call `#each` directly on the body and instead you should return a new body that calls `#each` on the original body and yields at least once per iteration.
+
+### Status needs to be an `Integer`
+
+The response status is now required to be an `Integer` with a value greater or equal to 100.
+
+Previously any object that responded to `#to_i` was allowed so a response like `["200", {}, ""]` will need to be modified to be `[200, {}, ""]` instead, this can be done by calling `#to_i` yourself.
