@@ -8,6 +8,15 @@ class AttachmentsController < ApplicationController
     end
   end
 
+  def update
+    @attachment = Attachment.find(params[:id])
+    if @attachment.update(attachment_params)
+      render json: { message: 'Attachment updated successfully' }, status: :ok
+    else
+      render json: { errors: @attachment.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def attachment_params
