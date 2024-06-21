@@ -755,6 +755,7 @@ module Rack
       ## ==== The +content-length+ Header
       ##
       def check_content_length_header(status, headers)
+        # puts "check_content_length_header: status=#{status}, headers=#{headers}"
         headers.each { |key, value|
           if key == 'content-length'
             ## There must not be a <tt>content-length</tt> header key when the
@@ -768,6 +769,7 @@ module Rack
       end
 
       def verify_content_length(size)
+        # puts "verify_content_length: content_length=#{@content_length}, size=#{size}"
         if @head_request
           unless size == 0
             raise LintError, "Response body was given for HEAD request, but should be empty"

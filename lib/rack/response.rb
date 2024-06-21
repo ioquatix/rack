@@ -72,7 +72,7 @@ module Rack
       if body.nil?
         @body = []
         @buffered = true
-        @length = 0
+        @length = nil
       elsif body.respond_to?(:to_str)
         @body = [body]
         @buffered = true
@@ -80,7 +80,7 @@ module Rack
       else
         @body = body
         @buffered = nil # undetermined as of yet.
-        @length = 0
+        @length = nil
       end
 
       yield self if block_given?
@@ -110,14 +110,13 @@ module Rack
         close
         return [@status, @headers, []]
       else
-        if @length && @length > 0 && !chunked?
-          set_header CONTENT_LENGTH, @length.to_s
-        end
-
         if block_given?
           @block = block
           return [@status, @headers, self]
         else
+          if @length && !chunked?
+            @headers[CONTENT_LENGTH] = @length.to_s
+          end
           return [@status, @headers, @body]
         end
       end
@@ -336,9 +335,11 @@ module Rack
             # Turn the user supplied body into a buffered array:
             body = @body
             @body = Array.new
-            @length = 0
 
             body.each do |part|
+              # We do this here, as HEAD requests will return a response which has a length but no body chunks. Unfortuantely, if we set length to zero in this case, it will replace the content-length header with zero, which is not what we want.
+              @length ||= 0
+
               @writer.call(part.to_s)
             end
 
@@ -359,7 +360,11 @@ module Rack
         chunk = chunk.dup unless chunk.frozen?
         @body << chunk
 
-        @length += chunk.bytesize
+        if @length
+          @length += chunk.bytesize
+        elsif @buffered
+          @length = chunk.bytesize
+        end
 
         return chunk
       end
